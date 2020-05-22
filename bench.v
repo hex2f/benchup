@@ -51,7 +51,7 @@ fn main() {
 	server := net.listen(server_port) or { panic(err) }
 	suites := ['intarr']
 	langs := [
-		Lang{ name: 'v', exec: 'v run ' },
+		Lang{ name: 'v', exec: 'v -prod run ' },
 		Lang{ name: 'js', exec: 'node ' }
 	]
 	mut out := ""
@@ -74,5 +74,5 @@ fn main() {
 		}
 	}
 	os.write_file('results.txt', out)
-	server.close() or { println("faield to close server, please do so manually.") }
+	server.close() or { println("failed to close server, please do so manually.") }
 }
