@@ -8,7 +8,7 @@ client.connect(20522, '127.0.0.1', function() {
 
 function execute() {
     let arr = []
-    for (let i = 0; i < 1000000; i++) {
+    for (let i = 0; i < 10000000; i++) {
         arr.push(i)
     }
 }

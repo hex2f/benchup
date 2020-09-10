@@ -5,8 +5,8 @@ import time
 import os
 
 struct Time {
-	warmup	int
-	hot		int
+	warmup	i64
+	hot		i64
 }
 
 fn handle_connection(con net.Socket) ?Time {
@@ -15,10 +15,10 @@ fn handle_connection(con net.Socket) ?Time {
 	}
 
 	con.send_string('warmup') or { panic('failed to send warmup command') }
-	warmup := time.new_stopwatch()
+	mut warmup := time.new_stopwatch({})
 	warmup.start()
 
-	hot := time.new_stopwatch()
+	mut hot := time.new_stopwatch({})
 
 	for {
 		line := con.read_line()
@@ -49,28 +49,30 @@ fn main() {
 	server_port := 20522
 	println('Starting server on port: $server_port')
 	server := net.listen(server_port) or { panic(err) }
-	suites := ['intarr']
+	suites := ['xjson2-encode', 'json-encode']
 	langs := [
-		Lang{ name: 'v', exec: 'v -prod run ' },
-		Lang{ name: 'js', exec: 'node ' }
+		Lang{ name: 'v', exec: 'v -prod run ' }
+		//Lang{ name: 'js', exec: 'node ' }
 	]
 	mut out := ""
 	for suite in suites {
 		println("suite - $suite")
 		out += "$suite\n"
 		for lang in langs {
-			p := "${lang.exec}suites/$suite/${suite}.$lang.name"
-			println('running - $p')
-			go os.exec(p)
-			con := server.accept() or {
-				server.close() or { }
-				panic(err)
+			for _ in 0..5 {
+				p := "${lang.exec}suites/$suite/${suite}.$lang.name"
+				println('running - $p')
+				go os.exec(p)
+				con := server.accept() or {
+					server.close() or { }
+					panic(err)
+				}
+				run := handle_connection(con) or {
+					out += "\t$lang.name DNF DNF\n"
+					continue
+				}
+				out += "\t$lang.name $run.warmup $run.hot\n"
 			}
-			run := handle_connection(con) or {
-				out += "\t$lang.name DNF DNF\n"
-				continue
-			}
-			out += "\t$lang.name $run.warmup $run.hot\n"
 		}
 	}
 	os.write_file('results.txt', out)
