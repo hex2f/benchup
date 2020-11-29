@@ -6,7 +6,7 @@ import io
 
 fn execute() {
 	mut m := []int{}
-	for i in 0..1000000 {
+	for i in 0..10000000 {
 		m << i
 	}
 }
