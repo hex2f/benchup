@@ -4,6 +4,7 @@ const client = new net.Socket()
 
 client.connect(20522, '127.0.0.1', function() {
     console.log('Connected')
+    client.write('hello\n')
 })
 
 function execute() {
@@ -15,10 +16,10 @@ function execute() {
 
 client.on('data', function(data) {
     console.log(data.toString())
-    if (data.toString() == 'warmup') {
+    if (data.toString() == 'warmup\n') {
         execute()
-        client.write('js start')
+        client.write('start\n')
         execute()
-        client.write('js finish')
+        client.write('finish\n')
     }
 })

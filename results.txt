@@ -1,12 +1,13 @@
-xjson2-encode
-	v 2788 2816
-	v 2731 2736
-	v 2745 2715
-	v 2737 2717
-	v 2801 2736
-json-encode
-	v 27598 15706
-	v 36957 19896
-	v 33095 17604
-	v 19130 3852
-	v 20262 5885
+intarr
+	v (clang, prod) 3096 14 12
+	v (clang, prod) 2644 12 16
+	v (clang, prod) 2638 12 15
+	v (clang) 672 17 18
+	v (clang) 655 18 19
+	v (clang) 687 18 22
+	js (node) 60 341 439
+	js (node) 76 337 386
+	js (node) 66 320 386
+	js (deno) 175 205 217
+	js (deno) 33 178 222
+	js (deno) 33 177 207
