@@ -3,11 +3,36 @@ module main
 import net
 import io
 
-fn execute() {
-	mut m := []int{}
-	for i in 0..10000000 {
-		m << i
-	}
+import os
+
+import json
+
+struct FeatureCollection {
+	typ string [json:"type"]
+	features []Feature
+}
+
+struct Feature {
+	typ string [json:"type"]
+	properties FeatureProperties
+	geometry Geometry
+}
+
+struct FeatureProperties {
+	name string
+}
+
+struct Geometry {
+	typ string [json:"type"]
+	coordinates [][][]f32
+}
+
+fn execute() ? {
+	data := os.read_file('suites/json_canada_decode/canada.json') or { panic('Failed to open json sample data.') }
+	canada := json.decode(FeatureCollection, data) or { panic('Failed to parse json sample data.') }
+	assert(canada.typ == 'FeatureCollection')
+	assert(canada.features[0].properties.name == 'Canada')
+	assert(canada.features[0].geometry.coordinates.len == 480)
 }
 
 fn main () {

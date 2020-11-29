@@ -18,6 +18,11 @@ pub struct Lang {
 	exec string
 }
 
+pub struct Suite {
+	name string
+	langs []Lang
+}
+
 struct Run {
 	name string
 	hello		i64
@@ -74,7 +79,7 @@ fn exec(path string) {
 	}
 }
 
-pub fn run(suites []string, langs []Lang, reps int, outpath string) {
+pub fn run(suites []Suite, reps int, outpath string) {
 	server_port := 20522
 	println('Starting server on port: $server_port')
 	server := net.listen_tcp(server_port) or { panic(err) }
@@ -85,13 +90,13 @@ pub fn run(suites []string, langs []Lang, reps int, outpath string) {
 		println('~ Running suite: $suite')
 		mut runs := []Run{}
 		
-		for lang in langs {
+		for lang in suite.langs {
 			for i in 0..reps {
-				println('~ $suite | $lang.name | ${i+1}/$reps')
+				println('~ $suite.name | $lang.name | ${i+1}/$reps')
 				// time to hello
 				mut hello := time.new_stopwatch({})
 				hello.start()
-				go exec('${lang.exec}suites/$suite/${suite}.$lang.ext')
+				go exec('${lang.exec}suites/$suite.name/${suite.name}.$lang.ext')
 				println('~ waiting for connection')
 				con := server.accept() or {
 					server.close() or { }
@@ -107,7 +112,7 @@ pub fn run(suites []string, langs []Lang, reps int, outpath string) {
 			}
 		}
 
-		mdout += mdgen(suite, langs, reps, runs)
+		mdout += mdgen(suite, reps, runs)
 	}
 	os.write_file(outpath, mdout)
 	server.close() or { panic('failed to close server, please do so manually.') }

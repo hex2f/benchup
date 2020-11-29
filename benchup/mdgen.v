@@ -2,16 +2,16 @@ module benchup
 
 import os
 
-pub fn mdgen(suite string, langs []Lang, reps int, runs []Run) string {
-	mut out := '# $suite\n'
+pub fn mdgen(suite Suite, reps int, runs []Run) string {
+	mut out := '# $suite.name\n'
 
-	desc := os.read_file('suites/$suite/desc.md') or { 'No description provided for this suite. Please open a PR.' }
+	desc := os.read_file('suites/$suite.name/desc.md') or { 'No description provided for this suite. Please open a PR.' }
 	out += '\n$desc\n'
 	
 	out += '| Language | Compile Time | Cold Time | Hot Time |\n'
 	out += '|----------|--------------|-----------|----------|\n'
-		println('~ generating markdown')
-	for lang in langs {
+	println('~ generating markdown')
+	for lang in suite.langs {
 		mut sum := RunTime{0,0,0}
 		for run in runs.filter(it.name == lang.name) {
 			sum.hello += run.hello
