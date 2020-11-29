@@ -1,17 +1,31 @@
-module main
+module benchup
 
 import net
 import time
 import os
 import io
 
-struct Time {
+struct RunTime {
+mut:
 	hello		i64
 	warmup	i64
 	hot			i64
 }
 
-fn handle_connection(con net.TcpConn, mut hello time.StopWatch) ?Time {
+pub struct Lang {
+	ext  string
+	name string
+	exec string
+}
+
+struct Run {
+	name string
+	hello		i64
+	warmup	i64
+	hot			i64
+}
+
+fn handle_connection(con net.TcpConn, mut hello time.StopWatch) ?RunTime {
 	defer {
 		con.close() or { }
 	}
@@ -25,37 +39,31 @@ fn handle_connection(con net.TcpConn, mut hello time.StopWatch) ?Time {
 
 	for {
 		line := reader.read_line() or { continue }
-		if line.len == 0 { return error("empty line") }
+		if line.len == 0 { return error('empty line') }
 		part := line.split('\r')[0]
 		
 		match part {
-			"hello" {
+			'hello' {
 				hello.stop()
 				println('< hello')
 				warmup.start()
 				con.write_str('warmup\n') or { panic('failed to send warmup command') }
 				println('> warmup')
 			}
-			"start" {
+			'start' {
 				warmup.stop()
 				hot.start()
 				println('< start')
 			}
-			"finish" {
+			'finish' {
 				hot.stop()
-				run := Time { hello: hello.elapsed().milliseconds(), warmup: warmup.elapsed().milliseconds(), hot: hot.elapsed().milliseconds() }
+				run := RunTime { hello: hello.elapsed().milliseconds(), warmup: warmup.elapsed().milliseconds(), hot: hot.elapsed().milliseconds() }
 				println('< finish')
 				return run
 			}
 			else {}
 		}
 	}
-}
-
-struct Lang {
-	ext  string
-	name string
-	exec string
 }
 
 fn exec(path string) {
@@ -66,33 +74,24 @@ fn exec(path string) {
 	}
 }
 
-const (
-	suites = ['intarr']
-	langs = [
-		Lang{ ext: 'v', name: 'v (clang, prod)', exec: 'v -prod run ' }
-		Lang{ ext: 'v', name: 'v (clang)', exec: 'v run ' }
-		//Lang{ ext: 'v', name: 'v (tcc)', exec: 'v -cc /usr/local/bin/tcc run ' }
-		Lang{ ext: 'js', name: 'js (node)', exec: 'node ' }
-		Lang{ ext: 'deno.js', name: 'js (deno)', exec: 'deno run --allow-net ' }
-	]
-	runs = 3
-)
-
-fn main() {
+pub fn run(suites []string, langs []Lang, reps int, outpath string) {
 	server_port := 20522
 	println('Starting server on port: $server_port')
 	server := net.listen_tcp(server_port) or { panic(err) }
-	mut out := ""
+
+	mut mdout := ''
+
 	for suite in suites {
-		println("~ suite - $suite")
-		out += "$suite\n"
+		println('~ Running suite: $suite')
+		mut runs := []Run{}
+		
 		for lang in langs {
-			for i in 0..runs {
-				println('~ $suite | $lang.name | ${i+1}/$runs')
+			for i in 0..reps {
+				println('~ $suite | $lang.name | ${i+1}/$reps')
 				// time to hello
 				mut hello := time.new_stopwatch({})
 				hello.start()
-				go exec("${lang.exec}suites/$suite/${suite}.$lang.ext")
+				go exec('${lang.exec}suites/$suite/${suite}.$lang.ext')
 				println('~ waiting for connection')
 				con := server.accept() or {
 					server.close() or { }
@@ -101,14 +100,15 @@ fn main() {
 				println('~ connected')
 				run := handle_connection(con, mut hello) or {
 					hello.stop()
-					out += "\t$lang.name ${hello.elapsed().milliseconds()} DNF DNF\n"
 					println('~ dnf')
 					continue
 				}
-				out += "\t$lang.name $run.hello $run.warmup $run.hot\n"
+				runs << Run{name: lang.name, hello: run.hello, warmup: run.warmup, hot: run.hot}
 			}
 		}
+
+		mdout += mdgen(suite, langs, reps, runs)
 	}
-	os.write_file('results.txt', out)
-	server.close() or { panic("failed to close server, please do so manually.") }
+	os.write_file(outpath, mdout)
+	server.close() or { panic('failed to close server, please do so manually.') }
 }
