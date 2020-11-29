@@ -19,6 +19,6 @@ pub fn mdgen(suite string, langs []Lang, reps int, runs []Run) string {
 		println('~ $results')
 		out += results + '\n'
 	}
-	out += '*Averaged over $reps runs.*\n'
+	out += '\n*Averaged over $reps runs.*\n'
 	return out
 }
